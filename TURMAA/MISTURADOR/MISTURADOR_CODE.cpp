@@ -1,0 +1,172 @@
+PROGRAM UserPrg
+VAR
+	
+MOTOR: BOOL;
+BOMBA_A: BOOL;
+BOMBA_B: BOOL;
+VALVULA_C: BOOL;
+VALVULA_FINAL: BOOL;
+LAMPADA: BOOL;
+
+BOTAO_LIGA: BOOL;
+BOTAO_DESL: BOOL;
+BOTAO_EMERG: BOOL;
+MANOMETRO: BOOL;
+
+MODO_TESTE: BOOL := 0;
+
+SISTEMA_LIGADO: BOOL;
+TIMER1 : TON;
+TIMER_FLAG : BOOL;
+TIMER_DELAY : TIME;
+
+ETAPAS : BYTE;
+END_VAR
+
+
+
+
+//ENTRADAS
+IF (MODO_TESTE = 0) THEN
+	BOTAO_LIGA := I00;
+	BOTAO_DESL := NOT I01;
+	BOTAO_EMERG := NOT I02;
+	MANOMETRO := I03;
+END_IF;
+
+//SAIDAS:
+Q00 := MOTOR;
+Q01 := BOMBA_A;
+Q02 := BOMBA_B;
+Q03 := VALVULA_C;
+Q04 := VALVULA_FINAL;
+Q05 := LAMPADA;
+
+IF (BOTAO_DESL = 1 OR BOTAO_EMERG = 1) THEN
+	SISTEMA_LIGADO := 0;
+ELSIF (BOTAO_LIGA = 1) THEN
+	SISTEMA_LIGADO := 1;
+END_IF;
+
+
+IF(SISTEMA_LIGADO = 1 AND BOTAO_EMERG = 0) THEN
+
+	TIMER1(IN:=TIMER_FLAG,PT:=TIMER_DELAY);
+	LAMPADA := 0;
+
+	CASE ETAPAS OF
+		0: 		
+			MOTOR := 0;
+			BOMBA_A := 1;
+			BOMBA_B := 0;
+			VALVULA_C := 0;
+			VALVULA_FINAL := 0;			
+			
+			IF (TIMER1.Q = 1) THEN
+				TIMER_FLAG := 0;
+				ETAPAS := 1;	
+			ELSE
+				TIMER_DELAY := T#3S;
+				TIMER_FLAG := 1;		
+			END_IF;			
+		1: 
+			MOTOR := 0;
+			BOMBA_A := 0;
+			BOMBA_B := 1;
+			VALVULA_C := 0;
+			VALVULA_FINAL := 0;
+									
+			IF (TIMER1.Q = 1) THEN
+				TIMER_FLAG := 0;
+				ETAPAS := 2;	
+			ELSE
+				TIMER_DELAY := T#4S;
+				TIMER_FLAG := 1;		
+			END_IF;
+		
+		2: 
+			MOTOR := 0;
+			BOMBA_A := 0;
+			BOMBA_B := 0;
+			VALVULA_C := 0;
+			VALVULA_FINAL := 0;
+			
+			IF (TIMER1.Q = 1) THEN
+				TIMER_FLAG := 0;
+				ETAPAS := 3;	
+			ELSE
+				TIMER_DELAY := T#2S;
+				TIMER_FLAG := 1;		
+			END_IF;
+		3:		
+			MOTOR := 0;
+			BOMBA_A := 0;
+			BOMBA_B := 0;
+			VALVULA_C := 1;
+			VALVULA_FINAL := 0;
+			
+			IF (TIMER1.Q = 1) THEN
+				TIMER_FLAG := 0;
+				ETAPAS := 4;	
+			ELSE
+				TIMER_DELAY := T#5S;
+				TIMER_FLAG := 1;		
+			END_IF;
+			
+		4:		
+			MOTOR := 1;
+			BOMBA_A := 0;
+			BOMBA_B := 0;
+			VALVULA_C := 0;
+			VALVULA_FINAL := 0;
+			
+			IF (TIMER1.Q = 1) THEN
+				TIMER_FLAG := 0;
+				ETAPAS := 5;	
+			ELSE
+				TIMER_DELAY := T#10S;
+				TIMER_FLAG := 1;		
+			END_IF;
+		5:		
+			MOTOR := 0;
+			BOMBA_A := 0;
+			BOMBA_B := 0;
+			VALVULA_C := 0;
+			VALVULA_FINAL := 0;
+			
+			IF (TIMER1.Q = 1) THEN
+				TIMER_FLAG := 0;
+				ETAPAS := 6;	
+			ELSE
+				TIMER_DELAY := T#2S;
+				TIMER_FLAG := 1;		
+			END_IF;
+		6:		
+			MOTOR := 0;
+			BOMBA_A := 0;
+			BOMBA_B := 0;
+			VALVULA_C := 0;
+			VALVULA_FINAL := 1;
+				
+			
+			IF (MANOMETRO = 1) THEN
+				TIMER_FLAG := 0;
+				ETAPAS := 0;				
+			END_IF;
+	END_CASE;
+	
+//SISTEMA DESLIGADO	
+ELSE	
+	MOTOR := 0;
+	BOMBA_A := 0;
+	BOMBA_B := 0;
+	VALVULA_C := 0;
+	VALVULA_FINAL := 0;
+	LAMPADA := BOTAO_EMERG;
+	ETAPAS := 0;
+	TIMER1.IN := 0;	
+END_IF
+
+
+
+
